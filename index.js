@@ -278,11 +278,11 @@ class Main {
             throw new Error('rerun')
         })
 
-        /*page.removeAllListeners('pageerror');
+        //page.removeAllListeners('pageerror');
         page.on('pageerror', errorstring => {
             debugger
-            reject(new Error(errorstring));
-        });*/
+            //reject(new Error(errorstring));
+        });
 
         page.removeAllListeners('error');
         page.on('error', error => {
@@ -300,6 +300,12 @@ class Main {
                 await Main.executeWithPrerequisites(item)
             } catch (e) {
                 console.error(e.message)
+                let arr = e.stack.split('\n')
+                for (let item of arr) {
+                    console.error(item)
+                    if (item.indexOf('^^^') > -1) break                                            
+                }
+                //throw e
                 process.exit(1)
             }
         }
@@ -376,8 +382,13 @@ class Main {
             }
         }
 
-        //lefuttatjuk a usecase-t               
-        await Main.executeUseCase(usecase)
+        //lefuttatjuk a usecase-t    
+        try {
+            await Main.executeUseCase(usecase)
+        } catch (e) {
+            debugger
+            throw e
+        }
     }
 
     static appendToLog(usecasename, usecaselvars) {
@@ -409,11 +420,13 @@ class Main {
         let usecaselvars = { ...extrausecaselvars }
         //ha string akkor siman beolvassuk
         if (typeof usecase == 'string') {
+            delete require.cache[require.resolve(process.cwd() + `/usecases/${usecase}`)];
             usecaseobj = require(process.cwd() + `/usecases/${usecase}`)
             usecasename = usecase
         } else
         //ha viszont json, akkor a name alapjan
         {
+            delete require.cache[require.resolve(process.cwd() + `/usecases/${usecase.name}`)];
             usecaseobj = require(process.cwd() + `/usecases/${usecase.name}`)
             usecasename = usecase.name
             if (usecase.hasOwnProperty('variables')) {
@@ -519,7 +532,12 @@ class Main {
                 })
 
                 //csinálunk róla egy screenshotot
+                try {
                 await page.screenshotLog(usecasename + '.before')
+            } catch (e) {
+                //debugger
+                //throw e
+            }
 
                 //insert toast
                 let temp_progress_str = eddigi_lefutott + '/' + Main.workflow_total_count + ' ' + szazalek + '%'
@@ -549,7 +567,13 @@ class Main {
                 endtime = new Date()
 
                 //csinálunk róla egy screenshotot
-                await page.screenshotLog(usecasename + '.after')
+                try {
+                    await page.screenshotLog(usecasename + '.after')
+                } catch (e) {
+                    debugger
+                    throw e
+
+                }
 
                 //process.stdout.clearLine();  // clear current text
                 //readline.clearLine(process.stdout)
@@ -952,6 +976,7 @@ class Flow {
 
 */
     static async inject_toast_toastrjs(conn, workflow, usecasename, progress) {
+        return
         await global.page.addStyleTag({ url: 'https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css' })
         await global.page.addScriptTag({ url: 'https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js' })
         await global.page.addStyleTag({ url: 'https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' })

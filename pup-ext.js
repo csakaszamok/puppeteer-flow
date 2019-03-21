@@ -80,7 +80,6 @@ class PupExt {
         gvars = Main.gvars
     }
 
-
     static escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
     }
@@ -108,8 +107,7 @@ class PupExt {
                 return window.btoa(binary);
             };
             //debugger
-            //console.log('sel', sel);
-            //var url = 'https://example.com/path/to/file.csv'
+            //console.log('sel', sel);            
             var url = window.origin + document.querySelector(sel).getAttribute('href')
             return fetch(url, {
                 method: 'GET',
@@ -157,7 +155,7 @@ class PupExt {
     static async getSelectorFromLabelAll(labeltext, type, startselector, forcedebug) {
         let result
         let labeltextEscaped = escapeRegExp(labeltext)
-        //TODO: ne csak chosen selecthez mukodjon
+        //TODO: works not only with chosen select
         result = await this.evaluate((labeltextEscaped, type, startselector, forcedebug) => {
             if (forcedebug) {
                 console.log(labeltextEscaped)
@@ -320,7 +318,7 @@ class PupExt {
                 res = await this.extractDataFromTable(tableselector, true)
                 debugger
             }
-            //megnezzuk, hogy itt van-e az a rekord amit keresunk:
+            //look if the record is here
             res = res.filter(filterfn)
 
             //ha nincs eredmeny akkor tovabba lepenunk
@@ -435,7 +433,7 @@ class PupExt {
     static async waitforfnvalue(scriptfn, value, timeout, args) {
         //this.options.executionTimeout
         if (!timeout) {
-            //TODO: konstans ertek megszuntetese
+            //TODO: remove constant value from here
             timeout = 30000/* this.options.waitTimeout*/
         }
 
@@ -454,11 +452,11 @@ class PupExt {
                 //console.error(e)
             }
             if (result == value) {
-                //console.log('megvan az ertek', value)                
+                //console.log('found it', value)                
                 return true
 
             } else {
-                //console.log('nincs meg..')
+                //console.log('not found')
             }
             now = new Date()
         } while ((now - start) < timeout)
@@ -467,7 +465,7 @@ class PupExt {
 
     static async  waitForDocumentReady() {
         try {
-            //TODO: kozponti parameterbol jojjenek a konstansok
+            //TODO: get from global parameters
             /*await this.waitforfnvalue(() => document.readyState, 'loading', 4000, 30000)
             await this.waitforfnvalue(() => document.readyState, 'complete', 4000, 3000)*/
             /*await this.waitForFunction(() => document.readyState == 'loading')
@@ -510,13 +508,13 @@ class PupExt {
         return selectortext
     }
 
-    //megvarja mig megjelenik az elem es utana kattint ra
+    //wait until element appers and then click on it
     static async waitAndClick(selector) {
         await this.waitFor(selector)
         await this.click(selector)
     }
 
-    //rakattint az elemere es megvarja mig az oldal betoltodik
+    //click on element and wait until page is loaded
     static async clickAndWait(selector) {
         const navigationPromise = page.waitForNavigation();
         await page.click(selector); // Clicking the link will indirectly cause a navigation
