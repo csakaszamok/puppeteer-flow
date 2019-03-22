@@ -707,60 +707,7 @@ Object.defineProperty(global, '__function', {
 var originobj
 
 function traceMethodCalls(obj) {
-    //originobj = obj
-
-    /* function getMethods(obj) {
-         var res = [];
-         for (var m in obj) {
-             if (typeof obj[m] == "function") {
-                 res.push(m)
-             }
-         }
-         return res;
-     }
- 
-     function cloneMethods(obj, target) {
-         var res = [];
-         for (var m in obj) {
-             if (typeof obj[m] == "function") {
-                 res.push(m)
-                 target[m] = obj[m]
-             }
-         }
-         return res;
-     }
- 
-     var clone = function (origin, target, prefix) {
-         Object.keys(origin).forEach(function (key) {
-             if (!target.hasOwnProperty(key)) {
-                 if (key.indexOf("function_") > -1) {
-                     //target["function_" + prefix] = origin[key];
-                     target["function"] = origin[key];
-                 }
-             }
-         });
-     }
- 
-     var cloneobj = {}
-     cloneMethods(obj, cloneobj)
- 
-     obj.on = function on() {
-         debugger
-         console.log(...arguments)
-         obj.action.apply(obj, arguments);
-     }
- 
-     /*let mets = getMethods(obj).sort()
-     console.log('mets', mets.sort());
- 
-     originobj = { action: function () { } }
-     originobj[action] = obj[action]
-     obj[action] = function action() {
-         console.log(...arguments)
-         originobj.action.apply(obj, arguments);
-     }     
-     ;*/
-
+   
     let handler = {
         get(target, propKey, receiver) {
             const origMethod = target[propKey];
@@ -828,60 +775,7 @@ var getStack = function () {
 var originobj
 
 function traceMethodCalls(obj) {
-    //originobj = obj
-
-    /* function getMethods(obj) {
-         var res = [];
-         for (var m in obj) {
-             if (typeof obj[m] == "function") {
-                 res.push(m)
-             }
-         }
-         return res;
-     }
- 
-     function cloneMethods(obj, target) {
-         var res = [];
-         for (var m in obj) {
-             if (typeof obj[m] == "function") {
-                 res.push(m)
-                 target[m] = obj[m]
-             }
-         }
-         return res;
-     }
- 
-     var clone = function (origin, target, prefix) {
-         Object.keys(origin).forEach(function (key) {
-             if (!target.hasOwnProperty(key)) {
-                 if (key.indexOf("function_") > -1) {
-                     //target["function_" + prefix] = origin[key];
-                     target["function"] = origin[key];
-                 }
-             }
-         });
-     }
- 
-     var cloneobj = {}
-     cloneMethods(obj, cloneobj)
- 
-     obj.on = function on() {
-         debugger
-     
-         obj.action.apply(obj, arguments);
-     }
- 
-     /*let mets = getMethods(obj).sort()
-     
- 
-     originobj = { action: function () { } }
-     originobj[action] = obj[action]
-     obj[action] = function action() {
-         
-         originobj.action.apply(obj, arguments);
-     }     
-*/
-
+   
     let handler = {
         get(target, propKey, receiver) {
             const origMethod = target[propKey];
@@ -1086,11 +980,6 @@ class Flow {
     }
 }
 
-
-
-
-//f1()
-
 //const puppeteer = require('puppeteer');
 function run(pagesToScrape) {
     return new Promise(async (resolve, reject) => {
@@ -1157,26 +1046,6 @@ function exitHandler(options, exitCode) {
     if (exitCode || exitCode === 0) message(exitCode);
     if (options.exit) process.exit();
 }
-
-//do something when app is closing
-//process.on('exit', exitHandler.bind(null, { cleanup: true }));
-
-//catches ctrl+c event
-//process.on('SIGINT', exitHandler.bind(null, { exit: true }));
-
-// catches "kill pid" (for example: nodemon restart)
-/*process.on('SIGUSR1', exitHandler.bind(null, { exit: true }));
-process.on('SIGUSR2', exitHandler.bind(null, { exit: true }));*/
-
-//catches uncaught exceptions
-//process.on('uncaughtException', exitHandler.bind(null, { exit: true }));
-
-/*process.on('unhandledRejection', (error, promise, ...args) => {
-    // Will print "unhandledRejection err is not defined"    
-    //console.error('unhandledRejection', error.message, error.stack, promise);
-    if (logger) logger.error({ errorname: 'unhandledRejection', message: error.message, stack: error.stack, promise: promise })
-    process.exit(-1)
-});*/
 
 module.exports = Flow
 
