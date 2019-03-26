@@ -154,23 +154,26 @@ class PupExt {
 
     static async getSelectorFromLabelAll(labeltext, type, startselector, forcedebug) {
         let result
-        let labeltextEscaped = escapeRegExp(labeltext)
+        let labeltextRegExp
+        let labelparamtype = Object.prototype.toString.call(labeltext)
+        if (labelparamtype == 'RegExp') {
+            labeltextRegExp = escapeRegExp(labeltext)
+        } 
         //TODO: works not only with chosen select
-        result = await this.evaluate((labeltextEscaped, type, startselector, forcedebug) => {
+        result = await this.evaluate((labeltext, labeltextRegExp, type, startselector, forcedebug) => {
             if (forcedebug) {
                 console.log(labeltextEscaped)
                 debugger
             }
             let selector = startselector ? startselector + ' label' : 'label'
-            let label = [...document.querySelectorAll(selector)].filter(item => item.innerText.search(new RegExp(labeltextEscaped)) != -1)
+            let label
+            
+            if (labeltextRegExp) {
+                label = [...document.querySelectorAll(selector)].filter(item => item.innerText.search(new RegExp(labeltextRegExp)) != -1)
+            } else {
+                label = [...document.querySelectorAll(selector)].filter(item => item.innerText == labeltext)
+            }
             let elems = []
-            /*switch (type) {
-                case 'chosen':
-                    elem = label.parentElement.children[1].firstChild.firstChild.children[1]
-                    break
-                default:
-                    elem = label.parentElement.children[1].firstChild
-            }*/
 
             //if label is array, then result will also be an array
             for (let item of label) {
@@ -187,7 +190,7 @@ class PupExt {
 
             return elems
 
-        }, labeltextEscaped, type, startselector, forcedebug)
+        }, labeltext, labeltextRegExp, type, startselector, forcedebug)
 
         //if (result) result = '#' + result
 
@@ -515,8 +518,13 @@ class PupExt {
     }
 
     //click on element and wait until page is loaded
-    static async clickAndWait(selector) {
-        const navigationPromise = page.waitForNavigation();
+    static async clickAndWait(selector, timeout) {
+        let navigationPromise
+        if (!timeout){
+            navigationPromise = page.waitForNavigation(timeout);
+        } else {
+            navigationPromise = page.waitForNavigation();
+        }        
         await page.click(selector); // Clicking the link will indirectly cause a navigation
         await navigationPromise; // The navigationPromise resolves after navigation has finished
     }
