@@ -280,13 +280,13 @@ class Main {
 
         //page.removeAllListeners('pageerror');
         page.on('pageerror', errorstring => {
-            debugger
+            //debugger
             //reject(new Error(errorstring));
         });
 
         page.removeAllListeners('error');
         page.on('error', error => {
-            debugger
+            //debugger
             debug(`Chrome Handler: GENERAL ERROR on: ${targetURL} : ${error}`);
             debug(`GLOBAL CHROMEPOOL count after releasing instance on ERROR: ${global.chromepool.borrowed} for: ${targetURL}`);
             global.chromepool.release(browser);
@@ -400,7 +400,7 @@ class Main {
             Main.workflowjson = jsonall
             Main.createExecuteLog(jsonall)
         } catch (e) {
-            debugger
+            //debugger
             console.error('e', e);
         }
     }
