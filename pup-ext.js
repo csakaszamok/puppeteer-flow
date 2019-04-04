@@ -154,15 +154,58 @@ class PupExt {
 
     static async getSelectorFromLabelAll(labeltext, type, startselector, forcedebug) {
         let result
+        let labeltextEscaped = escapeRegExp(labeltext)
+        //TODO: ne csak chosen selecthez mukodjon
+        result = await this.evaluate((labeltextEscaped, type, startselector, forcedebug) => {
+            if (forcedebug) {
+                console.log(labeltextEscaped)
+                debugger
+            }
+            let selector = startselector ? startselector + ' label' : 'label'
+            let label = [...document.querySelectorAll(selector)].filter(item => item.innerText.search(new RegExp(labeltextEscaped)) != -1)
+            let elems = []
+            /*switch (type) {
+                case 'chosen':
+                    elem = label.parentElement.children[1].firstChild.firstChild.children[1]
+                    break
+                default:
+                    elem = label.parentElement.children[1].firstChild
+            }*/
+
+            //if label is array, then result will also be an array
+            for (let item of label) {
+                let elem
+                elem = item.parentElement.children[1].firstChild
+                if (!elem.getAttribute('id')) {
+
+                    elem = item.parentElement.children[1].firstChild.firstChild.children[1]
+                } else {
+
+                }
+                elems.push('#' + elem.getAttribute('id'))
+            }
+
+            return elems
+
+        }, labeltextEscaped, type, startselector, forcedebug)
+
+        //if (result) result = '#' + result
+
+        return result
+    }
+
+    /*static async getSelectorFromLabelAll(labeltext, type, startselector, forcedebug) {
+        let result
         let labeltextRegExp
-        let labelparamtype = Object.prototype.toString.call(labeltext)
+        //let labelparamtype = Object.prototype.toString.call(labeltext).slice(8,-1)
+        let labelparamtype = 'RegExp'
         if (labelparamtype == 'RegExp') {
             labeltextRegExp = escapeRegExp(labeltext)
         } 
         //TODO: works not only with chosen select
         result = await this.evaluate((labeltext, labeltextRegExp, type, startselector, forcedebug) => {
             if (forcedebug) {
-                console.log(labeltextEscaped)
+                console.log(labeltextRegExp)
                 debugger
             }
             let selector = startselector ? startselector + ' label' : 'label'
@@ -195,7 +238,7 @@ class PupExt {
         //if (result) result = '#' + result
 
         return result
-    }
+    }*/
 
     static async setSelectByText(selector, value) {
         let fullselector = await this.getSelectorByInnerText(selector + ' option', value)
@@ -484,7 +527,7 @@ class PupExt {
 
     static async getSelector(fn, ...args) {
         let funcstr = fn.toString()
-        let selectortext = await this.evaluate((funcstr, jssource_html2css, ...args) => {            
+        let selectortext = await this.evaluate((funcstr, jssource_html2css, ...args) => {
             if (typeof forcedebug !== 'undefined' && forcedebug) debugger
             let element = eval(funcstr)(...args);
             eval(jssource_html2css).call(this);
@@ -520,11 +563,11 @@ class PupExt {
     //click on element and wait until page is loaded
     static async clickAndWait(selector, timeout) {
         let navigationPromise
-        if (!timeout){
+        if (timeout) {
             navigationPromise = page.waitForNavigation(timeout);
         } else {
             navigationPromise = page.waitForNavigation();
-        }        
+        }
         await page.click(selector); // Clicking the link will indirectly cause a navigation
         await navigationPromise; // The navigationPromise resolves after navigation has finished
     }
