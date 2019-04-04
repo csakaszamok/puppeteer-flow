@@ -590,7 +590,8 @@ class Main {
                 }
 
                 //ha sikeresen lefutott akkor kivesszuk a lefuttatando worklfow listabol
-                let index = Main.workflowjson.workflow.indexOf(usecasename)
+                //let index = Main.workflowjson.workflow.indexOf(usecasename)
+                let index = 0
                 //ha nincs talalat azert megnezzuk, hogy nem-e json-os mert akkor a name alapjan kell
                 if (index == -1) {
                     for (let a in Main.workflowjson.workflow) {
