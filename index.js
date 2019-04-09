@@ -96,6 +96,28 @@ Object.defineProperty(Function.prototype, 'name2', {
 
 var nightmare = traceMethodCalls(__nightmare)
 global.nightmare = nightmare*/
+function traceMethodCallsNew(obj) {
+    let maintarget
+    let classname = obj.constructor.name
+    const handler = {
+        get(target, propKey, receiver) {
+            maintarget = target
+            const targetValue = Reflect.get(target, propKey, receiver);
+            if (typeof targetValue === 'function') {
+                return function (...args) {
+                    if (propKey.indexOf('screenshot') == -1) {
+                        console.log('It is calling:', classname, /*JSON.stringify(maintarget),*/ propKey, JSON.stringify(args));
+                    }
+
+                    return targetValue.apply(this, args); // (A)
+                }
+            } else {
+                return targetValue;
+            }
+        }
+    };
+    return new Proxy(obj, handler);
+}
 
 function getFormattedTime() {
     var today = new Date();
@@ -251,7 +273,8 @@ class Main {
 
         //extend with own methods
         pupext(page, Main)
-        global.page = traceMethodCalls(page)
+        global.page = page
+
         await global.page.setViewport({
             width: 1024,
             height: 0
@@ -290,7 +313,11 @@ class Main {
             debug(`Chrome Handler: GENERAL ERROR on: ${targetURL} : ${error}`);
             debug(`GLOBAL CHROMEPOOL count after releasing instance on ERROR: ${global.chromepool.borrowed} for: ${targetURL}`);
             global.chromepool.release(browser);
-        });        
+        });     
+        
+        if (DEBUGMODE) {
+            global.page = traceMethodCallsNew(page)
+        }
         
         while (Main.workflowjson.workflow.length > 0) {
             //for (var item of Main.workflowjson.workflow) {
@@ -485,7 +512,10 @@ class Main {
             //console.log(l_conn, l_workflow, l_usecasename, l_progress, count > 1 ? l_execcount : '')
             //            process.stdout.write(l_conn, l_workflow, l_usecasename, count > 1 ? l_execcount : '')
             let executemsg = `${l_conn} ${l_workflow} ${l_usecasename}..`
-            process.stdout.write(executemsg)
+            //process.stdout.write(executemsg)
+            if (DEBUGMODE){
+                console.log(executemsg)
+            }
             var timer1 = setInterval(() => {
                 if (endtime) {
                     clearInterval(timer1)
