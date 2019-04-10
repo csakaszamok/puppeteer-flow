@@ -6,13 +6,13 @@ module.exports = {
         {
             name: 'temp-usecase1',
             variables: {
-                v1: gvars.global_valriable_here1
+                v1: gvars.global_variable_here1
             }
         },
         {
             name: 'temp-usecase2',
             variables: {
-                v2: gvars.global_valriable_here1
+                v2: gvars.global_variable_here1
             }
         }
     ]
