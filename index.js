@@ -26,10 +26,10 @@ global.faker = faker
 global.logger = logger
 process.setMaxListeners(Infinity)
 
-var lasturl
+//var lasturl
 var LOGLEVEL = 1
-let count = 1
-let replywhenerror = 1
+/*let count = 1
+let replywhenerror = 1*/
 let execcount = 1
 
 var debug = require('debug')('myapp')
@@ -106,8 +106,18 @@ function traceMethodCallsNew(obj) {
             if (typeof targetValue === 'function') {
                 return function (...args) {
                     if (propKey.indexOf('screenshot') == -1) {
-                        console.log('It is calling:', classname, /*JSON.stringify(maintarget),*/ propKey, JSON.stringify(args));
-                    }
+                         //console.log('It is calling:', classname, /*JSON.stringify(maintarget),*/ propKey, JSON.stringify(args));
+                         logger.info({
+                            'msg': 'START_OF_USECASE',
+                            'duration (ms)': 0,
+                            connection: Main.connectionfile,
+                            workflow: Main.workflowstr,
+                            usecase: '???',
+                            classname: classname,
+                            propkey: propKey,
+                            args: JSON.stringify(args)
+                        })                   
+                     }
 
                     return targetValue.apply(this, args); // (A)
                 }
@@ -134,12 +144,16 @@ function getFormattedTime() {
 class Main {
 
     static async exec(connectionfile, workflowstr) {
+        Main.lasturl
+
         global.Main = Main
         Main.workflowjson = null
         Main.workflowjsonhash = null
 
         //initialize variables
         Main.gvars = require(process.cwd() + '/workflows/' + connectionfile)
+        global.gvars = Main.gvars
+
         Main.historyUseCases = []
         Main.connectionfile = connectionfile
         Main.workflowstr = workflowstr
@@ -157,24 +171,52 @@ class Main {
         mkdirp.sync(Main.workingpath)
         mkdirp.sync(Main.logpath)
 
-        //read original workflow
-        let currentjsonpath = `working/${connectionfile}/${workflowstr}/current.json`
-        Main.workflowjson_origin = require(process.cwd() + `/workflows/${workflowstr}`)
-        let s = JSON.stringify(Main.workflowjson_origin)
-        Main.workflowjson_origin_hash = crypto.createHash('md5').update(s).digest('hex');
+//read workflow
+        let readWorkFlow = () => {
+            //read original workflow
+            let workflowjson
+            let workflowjson_origin
+            let workflowjson_origin_hash
+            let currentjsonpath = `working/${connectionfile}/${workflowstr}/current.json`
+            if (fs.existsSync(currentjsonpath)) {
+                workflowjson = require(process.cwd() + '/' + currentjsonpath)
+            } else {
+                /*let str = fs.readFileSync(process.cwd() + `/workflows/${workflowstr}.js`, 'utf8');
+                tempworkflowjson_origin = JSON.parse(str)*/
+                let temppath = process.cwd() + `/workflows/${workflowstr}`
+                delete require.cache[require.resolve(temppath)]
+                workflowjson_origin = require(temppath)
+                Main.gvars = gvars = { ...workflowjson_origin, ...Main.gvars }
+                delete require.cache[require.resolve(temppath)]
+                workflowjson_origin = require(temppath)
+
+                let s = JSON.stringify(workflowjson_origin)
+                workflowjson_origin_hash = crypto.createHash('md5').update(s).digest('hex');
+            }
+            //else load the origin
+            if (!workflowjson) {
+                workflowjson = workflowjson_origin
+                workflowjson.__HASH__ = workflowjson_origin_hash
+            }
+            return workflowjson
+        }
+
+        Main.workflowjson = readWorkFlow()
+        Main.workflow_total_count = Main.workflowjson.workflow.length
+
 
         //if have workflow in executing then contiune...
-        if (fs.existsSync(currentjsonpath)) {
+        /*if (fs.existsSync(currentjsonpath)) {
             Main.workflowjson = require(process.cwd() + '/' + currentjsonpath)
             //...except it changed hash
-            /*if (Main.workflowjson.__HASH__ != Main.workflowjson_origin_hash) {
+                if (Main.workflowjson.__HASH__ != Main.workflowjson_origin_hash) {
                 Main.workflowjson = null
                 //de ekkor toroljuk a futtatast is
                 rmDir(Main.workingpath)
                 mkdirp.sync(Main.workingpath)
+            }
             }*/
-        }
-
+        
         //set logger
         let currentDateTime = () => (new Date()).toLocaleString()
         /*const logger = winston.createLogger({
@@ -221,20 +263,14 @@ class Main {
             }));
         }*/
 
-        //else load the origin
-        if (!Main.workflowjson) {
-            Main.workflowjson = Main.workflowjson_origin
-            Main.workflowjson.__HASH__ = Main.workflowjson_origin_hash
-        }
-
-        Main.workflow_total_count = Main.workflowjson.workflow.length
+       
 
         //logging
         Main.logfilename = 'log' + timeStamp()
         Main.createExecuteLog(Main.workflowjson, workflowstr, new Date())
         //read variables anf merge it
         //Main.gvars = { ...Main.gvars, ...Main.workflowjson }
-        Main.gvars = { ...Main.workflowjson, ...Main.gvars }        
+        // Main.gvars = gvars = { ...Main.workflowjson, ...Main.gvars }
 
         let allstarttime = new Date()
         //execute rowkflows        
@@ -315,17 +351,30 @@ class Main {
             global.chromepool.release(browser);
         });     
         
-        if (DEBUGMODE) {
-            global.page = traceMethodCallsNew(page)
-        }
-        
-        while (Main.workflowjson.workflow.length > 0) {
+       //if (DEBUGMODE) {
+        global.page = traceMethodCallsNew(page)
+        //}
+
+        /*let workflowindex = 0
+        let usecasecount = Main.workflowjson.workflow.length*/
+
+        for (let workflowindex = 0; workflowindex < Main.workflowjson.workflow.length; workflowindex++) {
             //for (var item of Main.workflowjson.workflow) {
-            //always get 0. item 
-            let item = Main.workflowjson.workflow[0]
+            //always get 0. item             
             try {
+                //re-evaluation the workflow json, so read complete workflow for evaluation, but read only actual usecase
+                Main.workflowindex = workflowindex
+                let tempworkflowjson = readWorkFlow()
+                Main.workflowjson.workflow = { ...Main.workflowjson.workflow, ...tempworkflowjson.workflow }
+                //find first usecase that isnt done yet
+                let item = Main.workflowjson.workflow[workflowindex]
                 await Main.executeWithPrerequisites(item)
-            } catch (e) {
+
+                if (!item.__DONE__) {
+                    process.exit(1)
+                }
+
+           } catch (e) {
                 console.error(e.message)
                 let arr = e.stack.split('\n')
                 for (let item of arr) {
@@ -372,18 +421,24 @@ class Main {
     static getPrerequisite(item) {
         //ha string akkor siman beolvassuk
         if (typeof item == 'string') {
-            return require(process.cwd() + `/usecases/${item}`).prerequisite()
+            let tempobj = require(process.cwd() + `/usecases/${item}`)
+            if (tempobj.prerequisite) {
+                return tempobj.prerequisite()
+            }
         } else
         //ha viszont json, akkor a name alapjan
         {
-            return require(process.cwd() + `/usecases/${item.name}`).prerequisite()
+            let tempobj = require(process.cwd() + `/usecases/${item.name}`)
+            if (tempobj.prerequisite) {
+                return tempobj.prerequisite()   
+            }
         }
     }
 
     static async executeWithPrerequisites(usecase) {
       
         //ha vannak elofeltetelek ES meg nem futottak le akkor azokat lefuttatjuk
-        let prerequisite = Main.getPrerequisite(usecase)// require(`/usecases/${item}`).prerequisite()
+        let prerequisite = Main.getPrerequisite(usecase) || []// require(`/usecases/${item}`).prerequisite()
         /*if (prerequisite.length == 0 && DEBUGMODE) {
             debugger
         }*/
@@ -455,6 +510,7 @@ class Main {
         {
             delete require.cache[require.resolve(process.cwd() + `/usecases/${usecase.name}`)];
             usecaseobj = require(process.cwd() + `/usecases/${usecase.name}`)
+
             usecasename = usecase.name
             if (usecase.hasOwnProperty('variables')) {
                 //ha tombrol van szo akkor trukkos, mert annyiszor kell meghivnunk a funkciot ahany eleme van a tombnek
@@ -497,23 +553,21 @@ class Main {
         let err
         let endtime
 
-        for (var a = 0; a < replywhenerror; a++) {
+        let eddigi_lefutott = Main.workflowindex+1
+        let szazalek = Math.ceil(eddigi_lefutott / Main.workflow_total_count * 100)
 
-            let eddigi_lefutott = Main.workflow_total_count - Main.workflowjson.workflow.length + 1
-            let szazalek = Math.ceil(eddigi_lefutott / Main.workflow_total_count * 100)
-
-            //console.log('>>> PROGRESS: ' + eddigi_lefutott + '/' + Main.workflow_total_count + ' ' + szazalek + '% >>> EXECCOUNT:', execcount, '/', count, '>>> USECASEREPLYCOUNT:', a, '/', replywhenerror, LOGLEVEL > 0 ? usecasename : '')
-            let l_progress = 'P: ' + colors.bgBlue(eddigi_lefutott) + '/' + colors.bgBlue(Main.workflow_total_count) + ' ' + colors.bgBlue(szazalek) + '%'
-            let l_execcount = 'EC:' + colors.bgBlue(execcount) + '/' + colors.bgBlue(count)
-            let l_usecasereplycount = 'UC:' + colors.bgBlue(a + 1) + '/' + colors.bgBlue(replywhenerror)
-            let l_conn = colors.cyan(Main.connectionfile)
-            let l_workflow = colors.cyan(Main.workflowstr)
-            let l_usecasename = LOGLEVEL > 0 ? colors.yellow(usecasename) : ''
-            //console.log(l_conn, l_workflow, l_usecasename, l_progress, count > 1 ? l_execcount : '')
-            //            process.stdout.write(l_conn, l_workflow, l_usecasename, count > 1 ? l_execcount : '')
-            let executemsg = `${l_conn} ${l_workflow} ${l_usecasename}..`
-            //process.stdout.write(executemsg)
-            if (DEBUGMODE){
+        //console.log('>>> PROGRESS: ' + eddigi_lefutott + '/' + Main.workflow_total_count + ' ' + szazalek + '% >>> EXECCOUNT:', execcount, '/', count, '>>> USECASEREPLYCOUNT:', a, '/', replywhenerror, LOGLEVEL > 0 ? usecasename : '')
+        let l_progress = 'P: ' + colors.magenta(Main.workflowindex+1) + '/' + colors.magenta(Main.workflow_total_count) + ' ' + colors.magenta(szazalek) + '%'
+        //let l_execcount = 'EC:' + colors.magenta(execcount) + '/' + colors.magenta(Main.workflow_total_count)
+        //let l_usecasereplycount = 'UC:' + colors.bgBlue(0 + 1) + '/' + colors.bgBlue(replywhenerror)
+        let l_conn = colors.cyan(Main.connectionfile)
+        let l_workflow = colors.cyan(Main.workflowstr)
+        let l_usecasename = LOGLEVEL > 0 ? colors.yellow(usecasename) : ''
+        //console.log(l_conn, l_workflow, l_usecasename, l_progress, count > 1 ? l_execcount : '')
+        //            process.stdout.write(l_conn, l_workflow, l_usecasename, count > 1 ? l_execcount : '')
+        let executemsg = `${l_conn} ${l_workflow} ${l_usecasename}..`
+        //process.stdout.write(executemsg)
+        if (DEBUGMODE) {
                 console.log(executemsg)
             }
             var timer1 = setInterval(() => {
@@ -555,9 +609,9 @@ class Main {
 
                 await global.page.on('load', async data => {
                     let url = await global.page.url()
-                    if (url && lasturl != url) {
+                    if (url && Main.lasturl != url) {
                         logger.info({ 'msg': 'IN_PROGRESS', url: url })
-                        lasturl = url
+                        Main.lasturl = url
                     }
                 })
 
@@ -576,7 +630,6 @@ class Main {
                     await Flow.inject_toast(Main.connectionfile, Main.workflowstr, usecasename, temp_progress_str)
                 })
                 
-
                 //******************************************************************************************** */
                 //******************************************************************************************** */
                 //******************************************************************************************** */
@@ -610,7 +663,7 @@ class Main {
                 //process.stdout.cursorTo(0);
                 //readline.cursorTo(process.stdout, 0)
 
-                message(l_conn, l_workflow, l_usecasename, l_progress, count > 1 ? l_execcount : '')
+                message(l_conn, l_workflow, l_usecasename, l_progress)
                 
 
                 //ha van after akkor meghivjuk
@@ -633,7 +686,10 @@ class Main {
                 }
 
                 if (index != -1) {
-                    Main.workflowjson.workflow.splice(index, 1)
+                     /*let doneusecase = Main.workflowjson.workflow.splice(index, 1)
+                if (!Main.workflowjson.workflowdone) Main.workflowjson.workflowdone = []
+                Main.workflowjson.workflowdone.push(doneusecase)*/
+                Main.workflowjson.workflow[index].__DONE__ = usecase.__DONE__ = (new Date()).toLocaleString()
                 }
                 //a fizikai tolres helyett csak nullra rakjuk
                 //delete Main.workflowjson.workflow[index]
@@ -663,8 +719,7 @@ class Main {
                     //continue
                 }
             }
-            break
-        }
+          
 
         debug('usecasename')
         Main.addUseCasesToHistory(usecasename, starttime, endtime, err)
@@ -847,16 +902,16 @@ class Flow {
 
         Flow.init_params()
 
-        //console.warn('count', count)
-        for (var a = 0; a < count; a++) {
+       //console.warn('count', count)
+        /*for (var a = 0; a < count; a++) {
             //collect parameter files (exclude commands)
             //let parameterfiles = process.argv.filter(item => item.substr(0, 1) != '-')
             //await Main.exec(parameterfiles)
-
             await Main.exec(...process.argv.slice(2))
-
             console.warn('count a', a)
-        }
+        }*/
+
+        await Main.exec(...process.argv.slice(2))
     }
 
     static end(exitcode) {
