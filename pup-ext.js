@@ -109,7 +109,7 @@ class PupExt {
             };
             //debugger
             //console.log('sel', sel);            
-            var url = window.origin + document.querySelector(sel).href
+            var url = document.querySelector(sel).href
             return fetch(url, {
                 method: 'GET',
                 credentials: 'include'
