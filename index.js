@@ -106,8 +106,8 @@ function traceMethodCallsNew(obj) {
             if (typeof targetValue === 'function') {
                 return function (...args) {
                     if (propKey.indexOf('screenshot') == -1) {
-                         //console.log('It is calling:', classname, /*JSON.stringify(maintarget),*/ propKey, JSON.stringify(args));
-                         logger.info({
+                        //console.log('It is calling:', classname, /*JSON.stringify(maintarget),*/ propKey, JSON.stringify(args));
+                        logger.info({
                             'msg': 'START_OF_USECASE',
                             'duration (ms)': 0,
                             connection: Main.connectionfile,
@@ -116,8 +116,8 @@ function traceMethodCallsNew(obj) {
                             classname: classname,
                             propkey: propKey,
                             args: JSON.stringify(args)
-                        })                   
-                     }
+                        })
+                    }
 
                     return targetValue.apply(this, args); // (A)
                 }
@@ -162,7 +162,7 @@ class Main {
         Main.logpath = process.cwd() + '/logs/' + connectionfile + '/' + Main.workflowstr + '/' + uuidv4_num + '/'
         message(Main.workingpath);
         message(Main.logpath);
-        
+
         //in development delete logs and working folders
         /*rmDir(Main.workingpath)
         rmDir(Main.logpath)*/
@@ -171,7 +171,7 @@ class Main {
         mkdirp.sync(Main.workingpath)
         mkdirp.sync(Main.logpath)
 
-//read workflow
+        //read workflow
         let readWorkFlow = () => {
             //read original workflow
             let workflowjson
@@ -216,7 +216,7 @@ class Main {
                 mkdirp.sync(Main.workingpath)
             }
             }*/
-        
+
         //set logger
         let currentDateTime = () => (new Date()).toLocaleString()
         /*const logger = winston.createLogger({
@@ -263,7 +263,7 @@ class Main {
             }));
         }*/
 
-       
+
 
         //logging
         Main.logfilename = 'log' + timeStamp()
@@ -316,7 +316,7 @@ class Main {
             height: 0
         })
         //await global.page.goto('chrome-devtools://devtools/bundled/inspector.html')
-        
+
         //await ightmare.evaluate(() => console.clear())
         await global.page.evaluate(() => console.clear())
 
@@ -349,9 +349,9 @@ class Main {
             debug(`Chrome Handler: GENERAL ERROR on: ${targetURL} : ${error}`);
             debug(`GLOBAL CHROMEPOOL count after releasing instance on ERROR: ${global.chromepool.borrowed} for: ${targetURL}`);
             global.chromepool.release(browser);
-        });     
-        
-       //if (DEBUGMODE) {
+        });
+
+        //if (DEBUGMODE) {
         global.page = traceMethodCallsNew(page)
         //}
 
@@ -368,18 +368,19 @@ class Main {
                 Main.workflowjson.workflow = { ...Main.workflowjson.workflow, ...tempworkflowjson.workflow }
                 //find first usecase that isnt done yet
                 let item = Main.workflowjson.workflow[workflowindex]
+                if (typeof item == 'string') item = { name: item }
                 await Main.executeWithPrerequisites(item)
 
                 if (!item.__DONE__) {
                     process.exit(1)
                 }
 
-           } catch (e) {
+            } catch (e) {
                 console.error(e.message)
                 let arr = e.stack.split('\n')
                 for (let item of arr) {
                     console.error(item)
-                    if (item.indexOf('^^^') > -1) break                                            
+                    if (item.indexOf('^^^') > -1) break
                 }
                 //throw e
                 process.exit(1)
@@ -430,13 +431,13 @@ class Main {
         {
             let tempobj = require(process.cwd() + `/usecases/${item.name}`)
             if (tempobj.prerequisite) {
-                return tempobj.prerequisite()   
+                return tempobj.prerequisite()
             }
         }
     }
 
     static async executeWithPrerequisites(usecase) {
-      
+
         //ha vannak elofeltetelek ES meg nem futottak le akkor azokat lefuttatjuk
         let prerequisite = Main.getPrerequisite(usecase) || []// require(`/usecases/${item}`).prerequisite()
         /*if (prerequisite.length == 0 && DEBUGMODE) {
@@ -553,11 +554,11 @@ class Main {
         let err
         let endtime
 
-        let eddigi_lefutott = Main.workflowindex+1
+        let eddigi_lefutott = Main.workflowindex + 1
         let szazalek = Math.ceil(eddigi_lefutott / Main.workflow_total_count * 100)
 
         //console.log('>>> PROGRESS: ' + eddigi_lefutott + '/' + Main.workflow_total_count + ' ' + szazalek + '% >>> EXECCOUNT:', execcount, '/', count, '>>> USECASEREPLYCOUNT:', a, '/', replywhenerror, LOGLEVEL > 0 ? usecasename : '')
-        let l_progress = 'P: ' + colors.magenta(Main.workflowindex+1) + '/' + colors.magenta(Main.workflow_total_count) + ' ' + colors.magenta(szazalek) + '%'
+        let l_progress = 'P: ' + colors.magenta(Main.workflowindex + 1) + '/' + colors.magenta(Main.workflow_total_count) + ' ' + colors.magenta(szazalek) + '%'
         //let l_execcount = 'EC:' + colors.magenta(execcount) + '/' + colors.magenta(Main.workflow_total_count)
         //let l_usecasereplycount = 'UC:' + colors.bgBlue(0 + 1) + '/' + colors.bgBlue(replywhenerror)
         let l_conn = colors.cyan(Main.connectionfile)
@@ -568,158 +569,157 @@ class Main {
         let executemsg = `${l_conn} ${l_workflow} ${l_usecasename}..`
         //process.stdout.write(executemsg)
         if (DEBUGMODE) {
-                console.log(executemsg)
+            console.log(executemsg)
+        }
+        var timer1 = setInterval(() => {
+            if (endtime) {
+                clearInterval(timer1)
+                return
             }
-            var timer1 = setInterval(() => {
-                if (endtime) {
-                    clearInterval(timer1)
-                    return
-                }
-                process.stdout.write('.')
-            }, 1000);
+            process.stdout.write('.')
+        }, 1000);
 
+        try {
+
+            //lelogoljuk hogy mit fogunk futtatni
+            //await nightmare.evaluate((usecasename) => console.group(usecasename), usecasename)
+            await global.page.evaluate((usecasename) => console.group(usecasename), usecasename)
+            logger.info({
+                'msg': 'START_OF_USECASE',
+                'duration (ms)': 0,
+                connection: Main.connectionfile,
+                workflow: Main.workflowstr,
+                usecase: usecase
+            })
+
+            usecaselvars.__START__ = new Date()
+            Main.appendToLog(usecasename, usecaselvars)
+
+            //ha van beofre esemeny akkor meghivjuk
+            if (usecaseobj.execBefore) {
+                await usecaseobj.execBefore(global.page, Main.gvars, usecaselvars)
+                //console.log(usecasename + '.before is called')
+            }
+
+            //lekerjuk az url-t
+
+            /*await global.page.on('response', async response =>{
+                debugger
+                url = await response.url()
+            } )*/
+
+            await global.page.on('load', async data => {
+                let url = await global.page.url()
+                if (url && Main.lasturl != url) {
+                    logger.info({ 'msg': 'IN_PROGRESS', url: url })
+                    Main.lasturl = url
+                }
+            })
+
+            //csinálunk róla egy screenshotot
             try {
-
-                //lelogoljuk hogy mit fogunk futtatni
-                //await nightmare.evaluate((usecasename) => console.group(usecasename), usecasename)
-                await global.page.evaluate((usecasename) => console.group(usecasename), usecasename)
-                logger.info({
-                    'msg': 'START_OF_USECASE',
-                    'duration (ms)': 0,
-                    connection: Main.connectionfile,
-                    workflow: Main.workflowstr,
-                    usecase: usecase
-                })
-
-                usecaselvars.__START__ = new Date()
-                Main.appendToLog(usecasename, usecaselvars)
-
-                //ha van beofre esemeny akkor meghivjuk
-                if (usecaseobj.execBefore) {
-                    await usecaseobj.execBefore(global.page, Main.gvars, usecaselvars)
-                    //console.log(usecasename + '.before is called')
-                }
-
-                //lekerjuk az url-t
-
-                /*await global.page.on('response', async response =>{
-                    debugger
-                    url = await response.url()
-                } )*/
-
-                await global.page.on('load', async data => {
-                    let url = await global.page.url()
-                    if (url && Main.lasturl != url) {
-                        logger.info({ 'msg': 'IN_PROGRESS', url: url })
-                        Main.lasturl = url
-                    }
-                })
-
-                //csinálunk róla egy screenshotot
-                try {
                 await page.screenshotLog(usecasename + '.before')
             } catch (e) {
                 //debugger
                 //throw e
             }
 
-                //insert toast
-                let temp_progress_str = eddigi_lefutott + '/' + Main.workflow_total_count + ' ' + szazalek + '%'
+            //insert toast
+            let temp_progress_str = eddigi_lefutott + '/' + Main.workflow_total_count + ' ' + szazalek + '%'
+            await Flow.inject_toast(Main.connectionfile, Main.workflowstr, usecasename, temp_progress_str)
+            await page.on('load', async () => {
                 await Flow.inject_toast(Main.connectionfile, Main.workflowstr, usecasename, temp_progress_str)
-                await page.on('load', async () => {
-                    await Flow.inject_toast(Main.connectionfile, Main.workflowstr, usecasename, temp_progress_str)
-                })
-                
-                //******************************************************************************************** */
-                //******************************************************************************************** */
-                //******************************************************************************************** */
-                //futtatjuk a usecase-t
-                await usecaseobj.exec(page, Main.gvars, usecaselvars)
-                //******************************************************************************************** */
-                //******************************************************************************************** */
-                //******************************************************************************************** */
-                
-                //Ha ujrainditas kerelem van akkor itt gyorsna dobunk egy hibat               
-                /*  if (DEBUGMODE || await page.evaluate('window.puppeteer_flow_rerun_variable')) {
-                      replywhenerror++
-                      throw new Error('rerun')
-                  }*/
+            })
+
+            //******************************************************************************************** */
+            //******************************************************************************************** */
+            //******************************************************************************************** */
+            //futtatjuk a usecase-t
+            await usecaseobj.exec(page, Main.gvars, usecaselvars)
+            //******************************************************************************************** */
+            //******************************************************************************************** */
+            //******************************************************************************************** */
+
+            //Ha ujrainditas kerelem van akkor itt gyorsna dobunk egy hibat               
+            /*  if (DEBUGMODE || await page.evaluate('window.puppeteer_flow_rerun_variable')) {
+                  replywhenerror++
+                  throw new Error('rerun')
+              }*/
 
 
-                //megmerjuk mennyi ideig futott
-                endtime = new Date()
+            //megmerjuk mennyi ideig futott
+            endtime = new Date()
 
-                //csinálunk róla egy screenshotot
-                try {
-                    await page.screenshotLog(usecasename + '.after')
-                } catch (e) {
-                    debugger
-                    throw e
-
-                }
-
-                //process.stdout.clearLine();  // clear current text
-                //readline.clearLine(process.stdout)
-                //process.stdout.cursorTo(0);
-                //readline.cursorTo(process.stdout, 0)
-
-                message(l_conn, l_workflow, l_usecasename, l_progress)
-                
-
-                //ha van after akkor meghivjuk
-                if (usecaseobj.execAfter) {
-                    await usecaseobj.execAfter(page, Main.gvars, usecaselvars)
-                    //console.log(usecasename + '.after is called')
-                }
-
-                //ha sikeresen lefutott akkor kivesszuk a lefuttatando worklfow listabol
-                //let index = Main.workflowjson.workflow.indexOf(usecasename)
-                let index = 0
-                //ha nincs talalat azert megnezzuk, hogy nem-e json-os mert akkor a name alapjan kell
-                if (index == -1) {
-                    for (let a in Main.workflowjson.workflow) {
-                        if (Main.workflowjson.workflow[a].name && Main.workflowjson.workflow[a].name == usecasename) {
-                            index = a
-                            break
-                        }
-                    }
-                }
-
-                if (index != -1) {
-                     /*let doneusecase = Main.workflowjson.workflow.splice(index, 1)
-                if (!Main.workflowjson.workflowdone) Main.workflowjson.workflowdone = []
-                Main.workflowjson.workflowdone.push(doneusecase)*/
-                Main.workflowjson.workflow[index].__DONE__ = usecase.__DONE__ = (new Date()).toLocaleString()
-                }
-                //a fizikai tolres helyett csak nullra rakjuk
-                //delete Main.workflowjson.workflow[index]
-
-
-                usecaselvars.__DONE__ = endtime
-                usecaselvars.__DONE_MS__ = endtime - starttime
-                Main.appendToLog(usecasename, usecaselvars)
-                await page.evaluate((usecasename) => console.groupEnd(usecasename), usecasename)
-                
+            //csinálunk róla egy screenshotot
+            try {
+                await page.screenshotLog(usecasename + '.after')
             } catch (e) {
-                //console.error(e)                
-                logger.error({ 'duration (ms)': '', connection: Main.connectionfile, workflow: Main.workflowstr, usecase: usecasename, message: e.message, })
-                usecaselvars.__ERROR__ = e.code + ' ' + e.message
-                Main.appendToLog(usecasename, usecaselvars)
-                try {
-                    Main.addUseCasesToHistory(usecasename, starttime, endtime, e)
-                } catch (e) {
-                    // debugger
-                }
-                if (!DEBUGMODE && a + 1 == replywhenerror) {
-                    throw e
-                    //process.exit(-1)
-                    Flow.end(-1)
-                } else {
-                    throw e
-                    //continue
-                }
+                debugger
+                throw e
+
             }
-          
+
+            //process.stdout.clearLine();  // clear current text
+            //readline.clearLine(process.stdout)
+            //process.stdout.cursorTo(0);
+            //readline.cursorTo(process.stdout, 0)
+
+            message(l_conn, l_workflow, l_usecasename, l_progress)
+
+
+            //ha van after akkor meghivjuk
+            if (usecaseobj.execAfter) {
+                await usecaseobj.execAfter(page, Main.gvars, usecaselvars)
+                //console.log(usecasename + '.after is called')
+            }
+
+            //ha sikeresen lefutott akkor kivesszuk a lefuttatando worklfow listabol
+            //let index = Main.workflowjson.workflow.indexOf(usecasename)
+            /* let index = 0
+             //ha nincs talalat azert megnezzuk, hogy nem-e json-os mert akkor a name alapjan kell
+             if (index == -1) {
+                 for (let a in Main.workflowjson.workflow) {
+                     if (Main.workflowjson.workflow[a].name && Main.workflowjson.workflow[a].name == usecasename) {
+                         index = a
+                         break
+                     }
+                 }
+             }
+
+             if (index != -1) {
+                  /*let doneusecase = Main.workflowjson.workflow.splice(index, 1)
+             if (!Main.workflowjson.workflowdone) Main.workflowjson.workflowdone = []
+             Main.workflowjson.workflowdone.push(doneusecase)*/
+            usecase.__DONE__ = (new Date()).toLocaleString()
+
+            //a fizikai tolres helyett csak nullra rakjuk
+            //delete Main.workflowjson.workflow[index]
+
+            usecaselvars.__DONE__ = endtime
+            usecaselvars.__DONE_MS__ = endtime - starttime
+            Main.appendToLog(usecasename, usecaselvars)
+            await page.evaluate((usecasename) => console.groupEnd(usecasename), usecasename)
+
+        } catch (e) {
+            //console.error(e)                
+            logger.error({ 'duration (ms)': '', connection: Main.connectionfile, workflow: Main.workflowstr, usecase: usecasename, message: e.message, })
+            usecaselvars.__ERROR__ = e.code + ' ' + e.message
+            Main.appendToLog(usecasename, usecaselvars)
+            try {
+                Main.addUseCasesToHistory(usecasename, starttime, endtime, e)
+            } catch (e) {
+                // debugger
+            }
+            if (!DEBUGMODE && a + 1 == replywhenerror) {
+                throw e
+                //process.exit(-1)
+                Flow.end(-1)
+            } else {
+                throw e
+                //continue
+            }
+        }
+
 
         debug('usecasename')
         Main.addUseCasesToHistory(usecasename, starttime, endtime, err)
@@ -793,7 +793,7 @@ Object.defineProperty(global, '__function', {
 var originobj
 
 function traceMethodCalls(obj) {
-   
+
     let handler = {
         get(target, propKey, receiver) {
             const origMethod = target[propKey];
@@ -861,7 +861,7 @@ var getStack = function () {
 var originobj
 
 function traceMethodCalls(obj) {
-   
+
     let handler = {
         get(target, propKey, receiver) {
             const origMethod = target[propKey];
@@ -902,7 +902,7 @@ class Flow {
 
         Flow.init_params()
 
-       //console.warn('count', count)
+        //console.warn('count', count)
         /*for (var a = 0; a < count; a++) {
             //collect parameter files (exclude commands)
             //let parameterfiles = process.argv.filter(item => item.substr(0, 1) != '-')
