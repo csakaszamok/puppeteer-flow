@@ -1,3 +1,3 @@
 module.exports = {
-    url: 'https://www.thinkbroadband.com/download'
+    url: 'https://www.iconsdb.com/white-icons/test-tube-2-icon.html'
 }

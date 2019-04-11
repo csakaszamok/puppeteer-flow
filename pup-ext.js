@@ -67,7 +67,7 @@ class PupExt {
         page.__proto__.scrollIntoView = PupExt.scrollIntoView
         page.__proto__.dropzoneUploadFileData = PupExt.dropzoneUploadFileData
         page.__proto__.dropzoneUploadFilePath = PupExt.dropzoneUploadFilePath
-        page.__proto__.downloadTempFolder = PupExt.downloadTempFolder
+        page.__proto__.downloadFile = PupExt.downloadFile
         page.__proto__.uploadFile = PupExt.uploadFile
 
         page.__proto__.escapeRegExp = PupExt.escapeRegExp
@@ -92,7 +92,7 @@ class PupExt {
         await input.uploadFile(filePath);
     }
 
-    static async downloadTempFolder(sel, filename) {
+    static async downloadFile(sel, filename) {
         let nightmare = this
         let path = Main.logpath + 'files/' + uuidv4() + '/'
         mkdirp.sync(path)
@@ -109,7 +109,7 @@ class PupExt {
             };
             //debugger
             //console.log('sel', sel);            
-            var url = window.origin + document.querySelector(sel).getAttribute('href')
+            var url = window.origin + document.querySelector(sel).href
             return fetch(url, {
                 method: 'GET',
                 credentials: 'include'

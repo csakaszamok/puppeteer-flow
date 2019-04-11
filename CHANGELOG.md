@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 <!-- ### Added -->
 <!-- ### Removed -->
 
+## [0.0.19] - 2019-04-11
+### Changed
+* downloadTempFolder to downloadFile
+
 ## [0.0.18] - 2019-04-11
 ### Fixed
 * Simplifier usecase format in workflow error
