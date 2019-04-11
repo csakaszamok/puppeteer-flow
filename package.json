@@ -1,6 +1,6 @@
 {
   "name": "puppeteer-flow",
-  "version": "0.0.15",
+  "version": "0.0.17",
   "description": "Manage testcases/usecases in puppeteer",
   "main": "index.js",
   "scripts": {

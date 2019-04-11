@@ -16,11 +16,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 <!-- ### Added -->
 <!-- ### Removed -->
 
-## [0.0.16] - 2019-04-10
-### Changed
-
+## [0.0.17] - 2019-04-11
 ### Added
+* Added new method getTempFolder for download files
+* New demo (filedownload_demo) is available in exemaples
 
+## [0.0.16] - 2019-04-10
 ### Fixed
 * hotfix in examples
 

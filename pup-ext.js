@@ -75,6 +75,7 @@ class PupExt {
         page.__proto__.old_type = page.__proto__.type
         page.__proto__.type = PupExt.type
         page.__proto__.sleep = PupExt.sleep
+        page.__proto__.getTempFolder = PupExt.getTempFolder
 
         Main = mainclass
         gvars = Main.gvars
@@ -601,6 +602,12 @@ class PupExt {
             await page.screenshot({ path: filename, fullPage: true });
         }
     }
+
+    static getTempFolder() {
+        let path = Main.logpath + 'files/' + uuidv4() + '/'      
+        return path      
+    }
+
 }
 
 module.exports = PupExt.register
