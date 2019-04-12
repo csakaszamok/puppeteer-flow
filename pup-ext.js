@@ -92,9 +92,10 @@ class PupExt {
         await input.uploadFile(filePath);
     }
 
-    static async downloadFile(sel, filename) {
+    static async downloadFile(sel, filename, extpath) {
         let nightmare = this
-        let path = Main.logpath + 'files/' + uuidv4() + '/'
+        let temppath = Main.logpath + 'files/' + uuidv4() + '/'
+        let path = extpath ? extpath : temppath
         mkdirp.sync(path)
         //await nightmare.download(path + filename);
         const res = await this.evaluate((sel) => {

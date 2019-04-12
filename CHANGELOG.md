@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 <!-- ### Added -->
 <!-- ### Removed -->
 
+## [0.0.21] - 2019-04-11
+### Changed
+* Add optional path parameter to downloadfile
+
 ## [0.0.20] - 2019-04-11
 ### Fixed
 * downloadFile wrong href
